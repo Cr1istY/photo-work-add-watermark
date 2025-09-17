@@ -28,67 +28,55 @@ def add_white_border(img_path: Path, ratio: float = 0.015, out_path: Path | None
         bordered.save(out_path, quality=95, icc_profile=im.info.get("icc_profile"))
 
     return out_path
-def add_bottom_border_watermark(
-        img_path: Path,
-        text: str = "©YourName",
-        out_path: Path | None = None,
-        font_size: int = 40,
-        color: tuple[int, int, int] = (0, 0, 0),   # 浅灰，不扎眼
-        font_ttf: Path | None = None
+
+
+def add_exif_footer(
+    img_path: Path,
+    focal: str,
+    aperture: str,
+    shutter: str,
+    camera: str,
+    lens: str,
+    creator: str,
+    out_path: Path | None = None,
+    font_ttf: Path | None = None,
+    font_size: int = 36,
+    color: tuple[int, int, int] = (100, 100, 100),
+    bottom_crop_ratio: float = 0.06,   # 白边占整图比例
+    line_spacing: int = 8,             # 两行文字之间额外像素
+    side_margin: int = 60,             # 左右留空
+    output_quality: int = 95,
+    up_offset: int = 0,
 ) -> Path:
+    """在底部白边内写入两行拍摄信息"""
     if out_path is None:
-        out_path = img_path.with_stem(f"{img_path.stem}_signed")
+        out_path = img_path.with_stem(f"{img_path.stem}_exif")
 
     with Image.open(img_path) as im:
         draw = ImageDraw.Draw(im)
         font = ImageFont.truetype(str(font_ttf), font_size) if font_ttf else ImageFont.load_default()
 
-        # 文字宽高
-        bbox = draw.textbbox((0, 0), text, font=font)
-        tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
+        # 组装两行文字
+        line1 = f"焦距 {focal}　|　光圈 {aperture}　|　快门 {shutter}"
+        line2 = f"{camera}　|　{lens}　|　创 {creator}"
 
-        # 计算白边高度（之前 add_white_border 留下的）
-        # 假设白边比例统一，用图片下半部分 1/2 区域作为“白边”估算
-        border_h = im.height - int(im.height * 0.95)   # 5% 白边时约 0.95
-        y = im.height - border_h // 2 - th // 2        # 垂直居中在白边
-        x = (im.width - tw) // 2                       # 水平居中
+        # 测量尺寸
+        bbox1 = draw.textbbox((0, 0), line1, font=font)
+        bbox2 = draw.textbbox((0, 0), line2, font=font)
+        w1, h1 = bbox1[2] - bbox1[0], bbox1[3] - bbox1[1]
+        w2, h2 = bbox2[2] - bbox2[0], bbox2[3] - bbox2[1]
+        total_h = h1 + h2 + line_spacing
 
-        draw.text((x, y), text, font=font, fill=color)
-        im.save(out_path, quality=95)
+        # 白边区域
+        border_h = int(im.height * bottom_crop_ratio)
+        y0 = im.height - border_h + (border_h - total_h) // 2 - up_offset
+
+        # 画第一行
+        x1 = (im.width - w1) // 2
+        draw.text((x1, y0), line1, font=font, fill=color)
+        # 画第二行
+        x2 = (im.width - w2) // 2
+        draw.text((x2, y0 + h1 + line_spacing), line2, font=font, fill=color)
+
+        im.save(out_path, quality=output_quality)
     return out_path
-
-
-
-
-def add_bottom_border_and_white_border(img_path: Path, ratio: float = 0.015, out_path: Path | None = None, font_path: Path | None = None, font_size: int = 40) -> Path:
-    """
-    按原图宽高 *ratio* 添加白色边框。
-    例如 ratio=0.05 表示上下左右各加 5 % 的边。
-    out_path 为 None 时，直接在原文件名后加 _border。
-    """
-    if out_path is None:
-        out_path = img_path.with_stem(img_path.stem + "_border")
-
-    with Image.open(img_path) as im:
-        # 计算边框像素（四舍五入保证整数）
-        border_h = int(round(im.height * ratio))
-        border_w = int(round(im.width * ratio))
-        left = border_w
-        right = left
-        top = border_h
-        bottom = int(round(im.height * 0.18))
-
-        # ImageOps.expand 四个边接受同一个数字时，上下左右均生效
-        bordered = ImageOps.expand(im, border=(left, top, right, bottom), fill="white")
-        bordered.save(out_path, quality=100, icc_profile=im.info.get("icc_profile"))
-
-        draw = ImageDraw.Draw(bordered)
-        font = ImageFont.truetype(str(font_path), font_size) if font_path else ImageFont.load_default()
-
-        # 文字宽高
-        
-
-
-    return out_path
-
-
