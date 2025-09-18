@@ -13,7 +13,7 @@ import piexif
 # ----------- 自己按需要改的路径 -----------
 SRC_DIR      = Path(r'../imgs/input')          # 原图文件夹
 OUT_DIR      = Path(r'../imgs/output')  # 输出文件夹
-LOGO_DIR     = Path(r'../imgs/logo')           # 品牌 logo 文件夹（PNG，透明底）
+LOGO_DIR     = Path(r'../core/logo')           # 品牌 logo 文件夹（PNG，透明底）
 FONT_PATH    = r'C:\Windows\Fonts\msyhbd.ttc'  # win11 示例
 # ----------------------------------------
 

@@ -45,7 +45,7 @@ def add_border_and_watermark(image_path, output_path, brand_logo_path):
 if __name__ == '__main__':
     image_path = '../imgs/input/YKW_1066.jpg'  # 输入图片路径
     output_path = '../imgs/output'  # 输出图片路径
-    brand_logo_path = '../imgs/logo/nikon_1.png'  # 品牌 logo 路径
+    brand_logo_path = '../core/logo/nikon_1.png'  # 品牌 logo 路径
     add_border_and_watermark(image_path, output_path, brand_logo_path)
 
 
