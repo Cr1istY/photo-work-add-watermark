@@ -46,9 +46,9 @@ def add_exif_footer(
     img_path = add_white_border(img_path)
 
     info = Camera(Path(img_path)).info
-    focal = info.focal_length
-    aperture = info.aperture_value
-    shutter = info.exposure_time
+    focal = info.focal_str
+    aperture = info.aperture_str
+    shutter = info.exposure_str
     camera = info.model
     lens = info.lens_model
     creator = info.artist
@@ -66,16 +66,9 @@ def add_exif_footer(
 
         draw = ImageDraw.Draw(im)
         font = ImageFont.truetype(str(font_ttf), font_size) if font_ttf else ImageFont.load_default()
-        # 转换设备参数
-        real_focal = focal[0] / focal[1]
-        focal = f"{real_focal:.0f}"
-        real_aperture = aperture[0] / aperture[1]
-        aperture = f"{real_aperture:.2f}"
-        shutter = f"1 / {shutter[1]}" if shutter[1] > 1 else f"{shutter[0]}"
-
 
         # 组装两行文字
-        line1 = f"{focal} mm　|　f {aperture}　| {shutter} s |  iso: {iso}"
+        line1 = f"{focal} | {aperture}　| {shutter}  |  iso: {iso}"
         line2 = f"{camera}　|　{lens}　| {creator}"
 
         # 测量尺寸
@@ -95,18 +88,14 @@ def add_exif_footer(
         # 画第二行
         x2 = (im.width - w2) // 2
         draw.text((x2, y0 + h1 + line_spacing), line2, font=font, fill=color)
-
-        im.save(out_path, quality=output_quality, exif=im.info["exif"])
+        if "exif" in im.info:
+            im.save(out_path, quality=output_quality, exif=im.info["exif"])
+        else:
+            im.save(out_path, quality=output_quality)
     return out_path
 
 def add_exif_footer_left(
     img_path: Path,
-    focal: tuple,
-    aperture: tuple,
-    shutter: tuple,
-    camera: str,
-    lens: str,
-    creator: str,
     out_path: Path | None = None,
     font_ttf: Path | None = None,
     color: tuple[int, int, int] = (100, 100, 100),
@@ -115,6 +104,16 @@ def add_exif_footer_left(
 ) -> Path:
 
     img_path = add_white_border(img_path)
+
+    info = Camera(Path(img_path)).info
+    focal = info.focal_str
+    aperture = info.aperture_str
+    shutter = info.exposure_str
+    camera = info.model
+    lens = info.lens_model
+    creator = info.artist
+    iso = info.iso
+
 
     """在底部白边内写入两行拍摄信息"""
     if out_path is None:
@@ -127,21 +126,10 @@ def add_exif_footer_left(
 
         draw = ImageDraw.Draw(im)
         font = ImageFont.truetype(str(font_ttf), font_size) if font_ttf else ImageFont.load_default()
-        # 转换设备参数
-        real_focal = focal[0] / focal[1]
-        focal = f"{real_focal:.0f}"
-        real_aperture = aperture[0] / aperture[1]
-        aperture = f"{real_aperture:.2f}"
-        shutter = f"1 / {shutter[1]}" if shutter[1] > 1 else f"{shutter[0]}"
-
 
         # 组装两行文字
-        line1 = f"{focal} mm　|　f {aperture}　| {shutter} s | "
+        line1 = f"{focal} | {aperture}　| {shutter}  |  iso: {iso}"
         line2 = f"{camera}　|　{lens}　| {creator}"
-
-
-
-
 
         # 测量尺寸
         bbox1 = draw.textbbox((0, 0), line1, font=font)
@@ -154,14 +142,17 @@ def add_exif_footer_left(
         border_h = int(im.height * bottom_crop_ratio)
         y0 = im.height - border_h + (border_h - total_h) // 2 - border_h
 
-        # 画第一行
-        x1 = (im.width - w1) // 2
+        # 画第一行（靠左对齐，左边距为图像宽度的2%）
+        x1 = int(im.width * 0.02)  # 左边距 2%
         draw.text((x1, y0), line1, font=font, fill=color)
-        # 画第二行
-        x2 = (im.width - w2) // 2
+        # 画第二行（同样靠左对齐）
+        x2 = int(im.width * 0.02)  # 左边距 2%
         draw.text((x2, y0 + h1 + line_spacing), line2, font=font, fill=color)
 
-        im.save(out_path, quality=output_quality)
+        if "exif" in im.info:
+            im.save(out_path, quality=output_quality, exif=im.info["exif"])
+        else:
+            im.save(out_path, quality=output_quality)
     return out_path
 
 
