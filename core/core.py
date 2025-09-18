@@ -32,33 +32,43 @@ def add_white_border(img_path: Path, ratio: float = 0.015, out_path: Path | None
 
 def add_exif_footer(
     img_path: Path,
-    focal: str,
-    aperture: str,
-    shutter: str,
+    focal: tuple,
+    aperture: tuple,
+    shutter: tuple,
     camera: str,
     lens: str,
     creator: str,
     out_path: Path | None = None,
     font_ttf: Path | None = None,
-    font_size: int = 36,
     color: tuple[int, int, int] = (100, 100, 100),
-    bottom_crop_ratio: float = 0.06,   # 白边占整图比例
-    line_spacing: int = 8,             # 两行文字之间额外像素
-    side_margin: int = 60,             # 左右留空
-    output_quality: int = 95,
-    up_offset: int = 0,
+    bottom_crop_ratio: float = 0.012,   # 白边占整图比例
+    output_quality: int = 100,
 ) -> Path:
+
+    img_path = add_white_border(img_path)
+
     """在底部白边内写入两行拍摄信息"""
     if out_path is None:
-        out_path = img_path.with_stem(f"{img_path.stem}_exif")
+        out_path = img_path
 
     with Image.open(img_path) as im:
+        # 字体参数自适应
+        line_spacing = int(round(im.height * 0.005))
+        font_size = int(round(im.height * 0.03))
+
         draw = ImageDraw.Draw(im)
         font = ImageFont.truetype(str(font_ttf), font_size) if font_ttf else ImageFont.load_default()
+        # 转换设备参数
+        real_focal = focal[0] / focal[1]
+        focal = f"{real_focal:.0f}"
+        real_aperture = aperture[0] / aperture[1]
+        aperture = f"{real_aperture:.2f}"
+        shutter = f"1 / {shutter[1]}" if shutter[1] > 1 else f"{shutter[0]}"
+
 
         # 组装两行文字
-        line1 = f"焦距 {focal}　|　光圈 {aperture}　|　快门 {shutter}"
-        line2 = f"{camera}　|　{lens}　|　创 {creator}"
+        line1 = f"{focal} mm　|　f {aperture}　| {shutter} s"
+        line2 = f"{camera}　|　{lens}　| {creator}"
 
         # 测量尺寸
         bbox1 = draw.textbbox((0, 0), line1, font=font)
@@ -67,9 +77,16 @@ def add_exif_footer(
         w2, h2 = bbox2[2] - bbox2[0], bbox2[3] - bbox2[1]
         total_h = h1 + h2 + line_spacing
 
+        # 向上偏移量
+        # new_im.height = im.height * 0.015(border_height) + im.height
+        # 1.015 im.height = new_im.height
+        # im.height = new_im.height / 1.015
+        # border_height = im.height * 0.015
+        # up_offset = bh * 0.5
+
         # 白边区域
         border_h = int(im.height * bottom_crop_ratio)
-        y0 = im.height - border_h + (border_h - total_h) // 2 - up_offset
+        y0 = im.height - border_h + (border_h - total_h) // 2 - border_h
 
         # 画第一行
         x1 = (im.width - w1) // 2
