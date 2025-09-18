@@ -94,12 +94,14 @@ def add_exif_footer(
             im.save(out_path, quality=output_quality)
     return out_path
 
+
+
 def add_exif_footer_left(
     img_path: Path,
     out_path: Path | None = None,
     font_ttf: Path | None = None,
     color: tuple[int, int, int] = (100, 100, 100),
-    bottom_crop_ratio: float = 0.012,   # 白边占整图比例
+    bottom_crop_ratio: float = 0.18,   # 白边占整图比例
     output_quality: int = 100,
 ) -> Path:
 
@@ -128,8 +130,8 @@ def add_exif_footer_left(
         font = ImageFont.truetype(str(font_ttf), font_size) if font_ttf else ImageFont.load_default()
 
         # 组装两行文字
-        line1 = f"{focal} | {aperture}　| {shutter}  |  iso: {iso}"
-        line2 = f"{camera}　|　{lens}　| {creator}"
+        line1 = f"{focal} | {aperture}| {shutter} | iso: {iso}"
+        line2 = f"{camera}|　{lens}| {creator}"
 
         # 测量尺寸
         bbox1 = draw.textbbox((0, 0), line1, font=font)
@@ -148,6 +150,37 @@ def add_exif_footer_left(
         # 画第二行（同样靠左对齐）
         x2 = int(im.width * 0.02)  # 左边距 2%
         draw.text((x2, y0 + h1 + line_spacing), line2, font=font, fill=color)
+
+        HERE = Path(__file__).resolve().parent
+        logo_path = HERE / 'logo' / 'nikon.png'
+
+        if logo_path and logo_path.exists():
+            try:
+                logo = Image.open(logo_path)
+                if logo.mode == 'P':
+                    logo = logo.convert('RGBA')
+                # 调整logo大小，使其适应底部白边区域
+
+                logo_max_height = int(border_h * 2.2)
+                logo_ratio = logo.width / logo.height
+
+                if logo.height > logo_max_height:
+                    logo_new_height = logo_max_height
+                    logo_new_width = int(logo_new_height * logo_ratio)
+                    logo = logo.resize((logo_new_width, logo_new_height), Image.Resampling.LANCZOS)
+
+                # 计算logo位置（右下角）
+                logo_x = im.width - logo.width - int(im.width * 0.04)
+                logo_y = im.height - logo.height - int(border_h * 0.2)
+
+                # 将logo粘贴到图片上
+                if logo.mode == 'RGBA':
+                    im.paste(logo, (logo_x, logo_y), logo)
+                else:
+                    im.paste(logo, (logo_x, logo_y))
+            except Exception as e:
+                print(f"添加logo时出错: {e}")
+
 
         if "exif" in im.info:
             im.save(out_path, quality=output_quality, exif=im.info["exif"])
