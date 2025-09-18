@@ -23,6 +23,7 @@ def add_white_border(img_path: Path, ratio: float = 0.015, out_path: Path | None
         right = left
         top = border_h
         bottom = int(round(im.height * 0.18))
+        print(bottom)
 
         # ImageOps.expand 四个边接受同一个数字时，上下左右均生效
         bordered = ImageOps.expand(im, border=(left, top, right, bottom), fill="white")
@@ -141,8 +142,9 @@ def add_exif_footer_left(
         total_h = h1 + h2 + line_spacing
 
         # 白边区域
-        border_h = int(im.height * bottom_crop_ratio)
-        y0 = im.height - border_h + (border_h - total_h) // 2 - border_h
+        border_h = int(im.height * bottom_crop_ratio * 2.7)
+        print(border_h)
+        y0 = im.height - border_h + (border_h - total_h) // 2
 
         # 画第一行（靠左对齐，左边距为图像宽度的2%）
         x1 = int(im.width * 0.02)  # 左边距 2%
@@ -161,7 +163,7 @@ def add_exif_footer_left(
                     logo = logo.convert('RGBA')
                 # 调整logo大小，使其适应底部白边区域
 
-                logo_max_height = int(border_h * 2.2)
+                logo_max_height = int(border_h * 0.8)
                 logo_ratio = logo.width / logo.height
 
                 if logo.height > logo_max_height:
@@ -171,7 +173,7 @@ def add_exif_footer_left(
 
                 # 计算logo位置（右下角）
                 logo_x = im.width - logo.width - int(im.width * 0.04)
-                logo_y = im.height - logo.height - int(border_h * 0.2)
+                logo_y = im.height - logo.height - int(border_h * 0.08)
 
                 # 将logo粘贴到图片上
                 if logo.mode == 'RGBA':
