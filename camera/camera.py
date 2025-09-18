@@ -124,7 +124,7 @@ class Camera:
 
 # ------------------ demo ------------------
 if __name__ == "__main__":
-    cam = Camera(Path("../../imgs/input/YKW_3338.jpg"))
+    cam = Camera(Path("../imgs/input/YKW_3338.jpg"))
     info = cam.info
     print(info.model)
     print("曝光:", info.exposure_str, "光圈:", info.aperture_str, "焦距:", info.focal_str)
