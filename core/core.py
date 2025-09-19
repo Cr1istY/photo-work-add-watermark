@@ -37,6 +37,7 @@ def add_white_border(img_path: Path, ratio: float = 0.015, out_path: Path | None
     return out_path
 
 
+# 该函数已弃用
 def add_exif_footer(
     img_path: Path,
     out_path: Path | None = None,
