@@ -55,10 +55,12 @@ def add_exif_footer(
     creator = info.artist
     iso = info.iso
 
-
+    img_fix = str(img_path).split("\\")[-1]
     """在底部白边内写入两行拍摄信息"""
     if out_path is None:
         out_path = img_path
+    else:
+        out_path = out_path / img_fix
 
     with Image.open(img_path) as im:
         # 字体参数自适应
@@ -117,10 +119,12 @@ def add_exif_footer_left(
     creator = info.artist
     iso = info.iso
 
-
+    img_fix = str(img_path).split("\\")[-1]
     """在底部白边内写入两行拍摄信息"""
     if out_path is None:
         out_path = img_path
+    else:
+        out_path = out_path / img_fix
 
     with Image.open(img_path) as im:
         # 字体参数自适应
@@ -130,28 +134,57 @@ def add_exif_footer_left(
         draw = ImageDraw.Draw(im)
         font = ImageFont.truetype(str(font_ttf), font_size) if font_ttf else ImageFont.load_default()
 
-        # 组装两行文字
-        line1 = f"{focal} | {aperture}| {shutter} | iso: {iso}"
-        line2 = f"{camera}|　{lens}| {creator}"
+        # # 组装两行文字
+        # line1 = f"{focal} | {aperture}| {shutter} | iso: {iso}"
+        # line2 = f"{camera}|　{lens}| {creator}"
+        #
+        #
+        # # 测量尺寸
+        # bbox1 = draw.textbbox((0, 0), line1, font=font)
+        # bbox2 = draw.textbbox((0, 0), line2, font=font)
+        # w1, h1 = bbox1[2] - bbox1[0], bbox1[3] - bbox1[1]
+        # w2, h2 = bbox2[2] - bbox2[0], bbox2[3] - bbox2[1]
+        # total_h = h1 + h2 + line_spacing
+        #
+        # # 白边区域
+        # border_h = int(im.height * bottom_crop_ratio * 2.7)
+        # print(border_h)
+        # y0 = im.height - border_h + (border_h - total_h) // 2
+        #
+        # # 画第一行（靠左对齐，左边距为图像宽度的2%）
+        # x1 = int(im.width * 0.02)  # 左边距 2%
+        # draw.text((x1, y0), line1, font=font, fill=color)
+        # # 画第二行（同样靠左对齐）
+        # x2 = int(im.width * 0.02)  # 左边距 2%
+        # draw.text((x2, y0 + h1 + line_spacing), line2, font=font, fill=color)
 
-        # 测量尺寸
+        # 组装四行文字
+        line1 = f"{focal} |{aperture}"
+        line2 = f"{shutter} |iso: {iso}"
+        line3 = f"{lens}"
+        line4 = f"{camera} |{creator}"
+
         bbox1 = draw.textbbox((0, 0), line1, font=font)
         bbox2 = draw.textbbox((0, 0), line2, font=font)
+        bbox3 = draw.textbbox((0, 0), line3, font=font)
+        bbox4 = draw.textbbox((0, 0), line4, font=font)
         w1, h1 = bbox1[2] - bbox1[0], bbox1[3] - bbox1[1]
         w2, h2 = bbox2[2] - bbox2[0], bbox2[3] - bbox2[1]
-        total_h = h1 + h2 + line_spacing
+        w3, h3 = bbox3[2] - bbox3[0], bbox3[3] - bbox3[1]
+        w4, h4 = bbox4[2] - bbox4[0], bbox4[3] - bbox4[1]
 
-        # 白边区域
+        max_width = max(w1, w2, w3, w4)
+        total_h = h1 + h2 + h3 + h4 + line_spacing * 3  # 三行间距
+
         border_h = int(im.height * bottom_crop_ratio * 2.7)
-        print(border_h)
         y0 = im.height - border_h + (border_h - total_h) // 2
 
-        # 画第一行（靠左对齐，左边距为图像宽度的2%）
-        x1 = int(im.width * 0.02)  # 左边距 2%
-        draw.text((x1, y0), line1, font=font, fill=color)
-        # 画第二行（同样靠左对齐）
-        x2 = int(im.width * 0.02)  # 左边距 2%
-        draw.text((x2, y0 + h1 + line_spacing), line2, font=font, fill=color)
+        x_offset = int(im.width * 0.02)
+        draw.text((x_offset, y0), line1, font=font, fill=color)
+        draw.text((x_offset, y0 + h1 + line_spacing), line2, font=font, fill=color)
+        draw.text((x_offset, y0 + h1 + h2 + line_spacing * 2), line3, font=font, fill=color)
+        draw.text((x_offset, y0 + h1 + h2 + h3 + line_spacing * 3), line4, font=font, fill=color)
+
 
         HERE = Path(__file__).resolve().parent
         logo_path = HERE / 'logo' / 'nikon.png'
