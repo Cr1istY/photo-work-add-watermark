@@ -9,7 +9,7 @@ from pathlib import Path
 if __name__ == "__main__":
     HERE = Path(__file__).resolve().parent
 
-    path = HERE / 'imgs/input/YKW_3338.jpg'
+    path = HERE / 'imgs/input/YKW_3324.jpg'
     font_path = HERE / 'fonts/尔雅新大黑.ttf'
     out_path = HERE / 'imgs' / 'output'
 

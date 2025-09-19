@@ -159,12 +159,12 @@ def add_exif_footer_left(
         # # 画第二行（同样靠左对齐）
         # x2 = int(im.width * 0.02)  # 左边距 2%
         # draw.text((x2, y0 + h1 + line_spacing), line2, font=font, fill=color)
-
+        #
         # 组装四行文字
         line1 = f"{focal} |{aperture}"
         line2 = f"{shutter} |iso: {iso}"
-        line3 = f"{lens}"
-        line4 = f"{camera} |{creator}"
+        line3 = f"{camera} |{creator}"
+        line4 = f"{lens}"
 
         bbox1 = draw.textbbox((0, 0), line1, font=font)
         bbox2 = draw.textbbox((0, 0), line2, font=font)
@@ -175,11 +175,10 @@ def add_exif_footer_left(
         w3, h3 = bbox3[2] - bbox3[0], bbox3[3] - bbox3[1]
         w4, h4 = bbox4[2] - bbox4[0], bbox4[3] - bbox4[1]
 
-        max_width = max(w1, w2, w3, w4)
         total_h = h1 + h2 + h3 + h4 + line_spacing * 3  # 三行间距
 
         border_h = int(im.height * bottom_crop_ratio * 2.7)
-        y0 = im.height - border_h + (border_h - total_h) // 2
+        y0 = im.height - border_h + (border_h - total_h) // 2 - (im.height * 0.01)
 
         x_offset = int(im.width * 0.02)
         draw.text((x_offset, y0), line1, font=font, fill=color)
@@ -189,7 +188,10 @@ def add_exif_footer_left(
 
 
         HERE = Path(__file__).resolve().parent
-        logo_path = HERE / 'logo' / 'nikon.png'
+
+        logo = camera.split(' ')[0] + '.png'
+
+        logo_path = HERE / 'logo' / logo
 
         if logo_path and logo_path.exists():
             try:
@@ -199,16 +201,23 @@ def add_exif_footer_left(
                 # 调整logo大小，使其适应底部白边区域
 
                 logo_max_height = int(border_h * 0.8)
+                logo_max_width = int(border_h * 2)
                 logo_ratio = logo.width / logo.height
 
                 if logo.height > logo_max_height:
                     logo_new_height = logo_max_height
                     logo_new_width = int(logo_new_height * logo_ratio)
                     logo = logo.resize((logo_new_width, logo_new_height), Image.Resampling.LANCZOS)
+                elif logo.width > logo_max_width:
+                    logo_new_width = logo_max_width
+                    logo_new_height = int(logo_new_width / logo_ratio)
+                    logo = logo.resize((logo_new_width, logo_new_height), Image.Resampling.LANCZOS)
 
                 # 计算logo位置（右下角）
                 logo_x = im.width - logo.width - int(im.width * 0.04)
-                logo_y = im.height - logo.height - int(border_h * 0.08)
+                logo_y = im.height - logo.height - int(border_h * 0.12)
+                if logo.width > logo.height:
+                    logo_y = im.height - logo.height - int(border_h * 0.3)
 
                 # 将logo粘贴到图片上
                 if logo.mode == 'RGBA':
