@@ -9,16 +9,20 @@ from pathlib import Path
 if __name__ == "__main__":
     HERE = Path(__file__).resolve().parent
 
-    path = HERE / 'imgs/input/YKW_3324.jpg'
+    path = HERE / 'imgs/input/YKW_3338.jpg'
     font_path = HERE / 'fonts/尔雅新大黑.ttf'
     out_path = HERE / 'imgs' / 'output'
 
-    add_exif_footer_left(
-        Path(path),
-        color=(90, 90, 90),
-        font_ttf=Path(font_path),  # 按需修改
-        bottom_crop_ratio=0.055,
-        out_path=out_path,
-    )
+    try:
+        add_exif_footer_left(
+            Path(path),
+            color=(90, 90, 90),
+            font_ttf=Path(font_path),  # 按需修改
+            bottom_crop_ratio=0.055,
+            out_path=out_path,
+        )
+    except Exception as e:
+        print(e)
+        print('图片添加参数水印失败')
 
-    print('done')
+    print('完成')
