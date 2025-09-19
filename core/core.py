@@ -14,6 +14,8 @@ def add_white_border(img_path: Path, ratio: float = 0.015, out_path: Path | None
     """
     if out_path is None:
         out_path = img_path.with_stem(img_path.stem + "_border")
+    else:
+        out_path = out_path / img_path.name
 
     with Image.open(img_path) as im:
         # 计算边框像素（四舍五入保证整数）
@@ -44,7 +46,7 @@ def add_exif_footer(
     output_quality: int = 100,
 ) -> Path:
 
-    img_path = add_white_border(img_path)
+    img_path = add_white_border(img_path, out_path=out_path)
 
     info = Camera(Path(img_path)).info
     focal = info.focal_str
@@ -108,7 +110,7 @@ def add_exif_footer_left(
     output_quality: int = 100,
 ) -> Path:
 
-    img_path = add_white_border(img_path)
+    img_path = add_white_border(img_path, out_path=out_path)
 
     info = Camera(Path(img_path)).info
     focal = info.focal_str
