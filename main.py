@@ -2,15 +2,47 @@ from core import *
 from pathlib import Path
 
 
+# TODO: 字体美化
+# TODO: 排版美化
+# TODO: 多案例测试 - 字段多行
+
 if __name__ == "__main__":
-    path = 'imgs/input/YKW_3338.jpg'
-    font_path = 'fonts/尔雅新大黑.ttf'
+    HERE = Path(__file__).resolve().parent
 
-    add_exif_footer_left(
-        Path(path),
-        color=(90, 90, 90),
-        font_ttf=Path(font_path),  # 按需修改
-        bottom_crop_ratio=0.055,
-    )
+    imgs_file = HERE / 'imgs/input'
+    font_path = HERE / 'fonts/尔雅新大黑.ttf'
+    out_path = HERE / 'imgs' / 'output'
 
-    print('done')
+    for path in imgs_file.glob('*.jpg'):
+        try:
+            add_exif_footer_left(
+                Path(path),
+                color=(90, 90, 90),
+                font_ttf=Path(font_path),  # 按需修改
+                bottom_crop_ratio=0.055,
+                out_path=out_path,
+            )
+        except Exception as e:
+            print(e)
+            print('图片添加参数水印失败')
+    print('Done!')
+
+    # path = HERE / 'imgs/input/YKW_3324.jpg'
+    # font_path = HERE / 'fonts/尔雅新大黑.ttf'
+    # out_path = HERE / 'imgs' / 'output'
+    #
+    # try:
+    #     add_exif_footer_left(
+    #         Path(path),
+    #         color=(90, 90, 90),
+    #         font_ttf=Path(font_path),  # 按需修改
+    #         bottom_crop_ratio=0.055,
+    #         out_path=out_path,
+    #     )
+    # except Exception as e:
+    #     print(e)
+    #     print('图片添加参数水印失败')
+    #
+    # print('完成')
+
+

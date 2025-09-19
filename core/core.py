@@ -14,6 +14,8 @@ def add_white_border(img_path: Path, ratio: float = 0.015, out_path: Path | None
     """
     if out_path is None:
         out_path = img_path.with_stem(img_path.stem + "_border")
+    else:
+        out_path = out_path / img_path.name
 
     with Image.open(img_path) as im:
         # 计算边框像素（四舍五入保证整数）
@@ -23,6 +25,7 @@ def add_white_border(img_path: Path, ratio: float = 0.015, out_path: Path | None
         right = left
         top = border_h
         bottom = int(round(im.height * 0.18))
+        print(bottom)
 
         # ImageOps.expand 四个边接受同一个数字时，上下左右均生效
         bordered = ImageOps.expand(im, border=(left, top, right, bottom), fill="white")
@@ -34,6 +37,7 @@ def add_white_border(img_path: Path, ratio: float = 0.015, out_path: Path | None
     return out_path
 
 
+# 该函数已弃用
 def add_exif_footer(
     img_path: Path,
     out_path: Path | None = None,
@@ -43,7 +47,7 @@ def add_exif_footer(
     output_quality: int = 100,
 ) -> Path:
 
-    img_path = add_white_border(img_path)
+    img_path = add_white_border(img_path, out_path=out_path)
 
     info = Camera(Path(img_path)).info
     focal = info.focal_str
@@ -54,10 +58,12 @@ def add_exif_footer(
     creator = info.artist
     iso = info.iso
 
-
+    img_fix = str(img_path).split("\\")[-1]
     """在底部白边内写入两行拍摄信息"""
     if out_path is None:
         out_path = img_path
+    else:
+        out_path = out_path / img_fix
 
     with Image.open(img_path) as im:
         # 字体参数自适应
@@ -105,7 +111,7 @@ def add_exif_footer_left(
     output_quality: int = 100,
 ) -> Path:
 
-    img_path = add_white_border(img_path)
+    img_path = add_white_border(img_path, out_path=out_path)
 
     info = Camera(Path(img_path)).info
     focal = info.focal_str
@@ -116,10 +122,12 @@ def add_exif_footer_left(
     creator = info.artist
     iso = info.iso
 
-
+    img_fix = str(img_path).split("\\")[-1]
     """在底部白边内写入两行拍摄信息"""
     if out_path is None:
         out_path = img_path
+    else:
+        out_path = out_path / img_fix
 
     with Image.open(img_path) as im:
         # 字体参数自适应
@@ -129,30 +137,62 @@ def add_exif_footer_left(
         draw = ImageDraw.Draw(im)
         font = ImageFont.truetype(str(font_ttf), font_size) if font_ttf else ImageFont.load_default()
 
-        # 组装两行文字
-        line1 = f"{focal} | {aperture}| {shutter} | iso: {iso}"
-        line2 = f"{camera}|　{lens}| {creator}"
+        # # 组装两行文字
+        # line1 = f"{focal} | {aperture}| {shutter} | iso: {iso}"
+        # line2 = f"{camera}|　{lens}| {creator}"
+        #
+        #
+        # # 测量尺寸
+        # bbox1 = draw.textbbox((0, 0), line1, font=font)
+        # bbox2 = draw.textbbox((0, 0), line2, font=font)
+        # w1, h1 = bbox1[2] - bbox1[0], bbox1[3] - bbox1[1]
+        # w2, h2 = bbox2[2] - bbox2[0], bbox2[3] - bbox2[1]
+        # total_h = h1 + h2 + line_spacing
+        #
+        # # 白边区域
+        # border_h = int(im.height * bottom_crop_ratio * 2.7)
+        # print(border_h)
+        # y0 = im.height - border_h + (border_h - total_h) // 2
+        #
+        # # 画第一行（靠左对齐，左边距为图像宽度的2%）
+        # x1 = int(im.width * 0.02)  # 左边距 2%
+        # draw.text((x1, y0), line1, font=font, fill=color)
+        # # 画第二行（同样靠左对齐）
+        # x2 = int(im.width * 0.02)  # 左边距 2%
+        # draw.text((x2, y0 + h1 + line_spacing), line2, font=font, fill=color)
+        #
+        # 组装四行文字
+        line1 = f"{focal} |{aperture}"
+        line2 = f"{shutter} |iso: {iso}"
+        line3 = f"{camera} |{creator}"
+        line4 = f"{lens}"
 
-        # 测量尺寸
         bbox1 = draw.textbbox((0, 0), line1, font=font)
         bbox2 = draw.textbbox((0, 0), line2, font=font)
+        bbox3 = draw.textbbox((0, 0), line3, font=font)
+        bbox4 = draw.textbbox((0, 0), line4, font=font)
         w1, h1 = bbox1[2] - bbox1[0], bbox1[3] - bbox1[1]
         w2, h2 = bbox2[2] - bbox2[0], bbox2[3] - bbox2[1]
-        total_h = h1 + h2 + line_spacing
+        w3, h3 = bbox3[2] - bbox3[0], bbox3[3] - bbox3[1]
+        w4, h4 = bbox4[2] - bbox4[0], bbox4[3] - bbox4[1]
 
-        # 白边区域
-        border_h = int(im.height * bottom_crop_ratio)
-        y0 = im.height - border_h + (border_h - total_h) // 2 - border_h
+        total_h = h1 + h2 + h3 + h4 + line_spacing * 3  # 三行间距
 
-        # 画第一行（靠左对齐，左边距为图像宽度的2%）
-        x1 = int(im.width * 0.02)  # 左边距 2%
-        draw.text((x1, y0), line1, font=font, fill=color)
-        # 画第二行（同样靠左对齐）
-        x2 = int(im.width * 0.02)  # 左边距 2%
-        draw.text((x2, y0 + h1 + line_spacing), line2, font=font, fill=color)
+        border_h = int(im.height * bottom_crop_ratio * 2.7)
+        y0 = im.height - border_h + (border_h - total_h) // 2 - (im.height * 0.01)
+
+        x_offset = int(im.width * 0.02)
+        draw.text((x_offset, y0), line1, font=font, fill=color)
+        draw.text((x_offset, y0 + h1 + line_spacing), line2, font=font, fill=color)
+        draw.text((x_offset, y0 + h1 + h2 + line_spacing * 2), line3, font=font, fill=color)
+        draw.text((x_offset, y0 + h1 + h2 + h3 + line_spacing * 3), line4, font=font, fill=color)
+
 
         HERE = Path(__file__).resolve().parent
-        logo_path = HERE / 'logo' / 'nikon.png'
+
+        logo = camera.split(' ')[0] + '.png'
+
+        logo_path = HERE / 'logo' / logo
 
         if logo_path and logo_path.exists():
             try:
@@ -161,17 +201,24 @@ def add_exif_footer_left(
                     logo = logo.convert('RGBA')
                 # 调整logo大小，使其适应底部白边区域
 
-                logo_max_height = int(border_h * 2.2)
+                logo_max_height = int(border_h * 0.8)
+                logo_max_width = int(border_h * 2)
                 logo_ratio = logo.width / logo.height
 
                 if logo.height > logo_max_height:
                     logo_new_height = logo_max_height
                     logo_new_width = int(logo_new_height * logo_ratio)
                     logo = logo.resize((logo_new_width, logo_new_height), Image.Resampling.LANCZOS)
+                elif logo.width > logo_max_width:
+                    logo_new_width = logo_max_width
+                    logo_new_height = int(logo_new_width / logo_ratio)
+                    logo = logo.resize((logo_new_width, logo_new_height), Image.Resampling.LANCZOS)
 
                 # 计算logo位置（右下角）
                 logo_x = im.width - logo.width - int(im.width * 0.04)
-                logo_y = im.height - logo.height - int(border_h * 0.2)
+                logo_y = im.height - logo.height - int(border_h * 0.12)
+                if logo.width > logo.height:
+                    logo_y = im.height - logo.height - int(border_h * 0.3)
 
                 # 将logo粘贴到图片上
                 if logo.mode == 'RGBA':
